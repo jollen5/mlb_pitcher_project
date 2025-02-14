@@ -3,7 +3,7 @@
 import streamlit as st
 import pandas as pd
 import joblib
-import sqlite3
+import psycopg2
 import os
 import numpy as np
 
@@ -30,21 +30,21 @@ else:
 	
 # ✅ Get Player List from Database
 def get_players():
-	conn = sqlite3.connect("mlb_data.db")
+	conn = psycopg2.connect("mlb_data.db")
 	df = pd.read_sql("SELECT DISTINCT player FROM pitcher_stats", conn)
 	conn.close()
 	return df["player"].tolist()
 
 # ✅ Get Opponent List from Database
 def get_opponents():
-	conn = sqlite3.connect("mlb_data.db")
+	conn = psycopg2.connect("mlb_data.db")
 	df = pd.read_sql("SELECT DISTINCT opponent FROM pitcher_stats", conn)
 	conn.close()
 	return df["opponent"].dropna().tolist()
 
 # ✅ Get Player's Game Logs
 def get_player_game_logs(player):
-	conn = sqlite3.connect("mlb_data.db")
+	conn = psycopg2.connect("mlb_data.db")
 	df = pd.read_sql(f"SELECT * FROM pitcher_stats WHERE player = '{player}' ORDER BY dat DESC", conn)
 	conn.close()
 	

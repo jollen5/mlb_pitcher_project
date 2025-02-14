@@ -1,5 +1,6 @@
 import requests
-import sqlite3
+import psycopg2
+import os
 import threading
 import time
 import random
@@ -19,7 +20,7 @@ USER_AGENTS = [
 
 # ✅ Ensure Database and Table Exist Before Scraping
 def ensure_database():
-    conn = sqlite3.connect("mlb_data.db")
+    conn = psycopg2.connect("mlb_data.db")
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS pitcher_stats (
@@ -217,7 +218,7 @@ def scrape_pitcher_data(player_id, player_name):
                 print(f"⚠️ Skipping row for {player_name} due to error: {e}")
                 
     if pitcher_data:
-        conn = sqlite3.connect("mlb_data.db")
+        conn = psycopg2.connect("mlb_data.db")
         cursor = conn.cursor()
         cursor.executemany(
             """

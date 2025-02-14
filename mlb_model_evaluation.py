@@ -1,4 +1,4 @@
-import sqlite3
+import psycopg2
 import pandas as pd
 import joblib
 import numpy as np
@@ -24,7 +24,7 @@ encoder_path = "models/opponent_label_encoder.pkl"
 label_encoder = joblib.load(encoder_path) if os.path.exists(encoder_path) else None
 
 # ✅ Load Data from SQLite
-conn = sqlite3.connect("mlb_data.db")
+conn = psycopg2.connect("mlb_data.db")
 df = pd.read_sql("SELECT * FROM pitcher_stats WHERE opponent IS NOT NULL AND opponent != ''", conn)
 df["opponent_k_rate"] = pd.to_numeric(df["opponent_k_rate"], errors="coerce")
 df = df.dropna(subset=["opponent_k_rate"])  # ✅ Remove rows where opponent_k_rate is missing

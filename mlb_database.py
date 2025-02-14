@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
-import sqlite3
+import psycopg2
+import os
 import pandas as pd
 
 # ✅ Function to Fetch Player Data
 def get_player_data(player_name):
-	conn = sqlite3.connect("mlb_data.db")
+	conn = psycopg2.connect("mlb_data.db")
 	query = "SELECT * FROM pitcher_stats WHERE player = ?"
 	df = pd.read_sql(query, conn, params=(player_name,))
 	conn.close()
@@ -13,7 +14,7 @@ def get_player_data(player_name):
 
 # ✅ Function to Get All Players
 def get_all_players():
-	conn = sqlite3.connect("mlb_data.db")
+	conn = psycopg2.connect("mlb_data.db")
 	query = "SELECT DISTINCT player FROM pitcher_stats"
 	df = pd.read_sql(query, conn)
 	conn.close()
@@ -21,7 +22,7 @@ def get_all_players():
 
 # ✅ Function to Get All Opponent Teams
 def get_all_opponents():
-	conn = sqlite3.connect("mlb_data.db")
+	conn = psycopg2.connect("mlb_data.db")
 	query = "SELECT DISTINCT opponent FROM pitcher_stats"
 	df = pd.read_sql(query, conn)
 	conn.close()

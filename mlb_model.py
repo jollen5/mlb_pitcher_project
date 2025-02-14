@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import sqlite3
+import psycopg2
 import pandas as pd
 import joblib
 import numpy as np
@@ -24,7 +24,7 @@ def convert_innings(innings):
 		return whole  
 	
 # ✅ Load Data from SQLite
-conn = sqlite3.connect("mlb_data.db")
+conn = psycopg2.connect("mlb_data.db")
 df = pd.read_sql("SELECT * FROM pitcher_stats", conn)
 conn.close()
 
