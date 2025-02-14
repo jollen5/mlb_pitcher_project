@@ -116,7 +116,10 @@ if os.path.exists(model_path):
 			recent_k9 = season_k9  # Use season K/9 as a fallback
 		if label_encoder and opponent in label_encoder.classes_:
 			opponent_encoded = label_encoder.transform([opponent])[0]
-			X_pred = np.array([[innings_pitched, opponent_encoded, home_away_value, opponent_k_rate, recent_k9]])
+			# ✅ Make Sure We Have 5 Features with Explicit Column Names
+			X_pred = pd.DataFrame([[innings_pitched, opponent_encoded, home_away_value, opponent_k_rate, recent_k9]],
+														columns=["innings_pitched", "opponent_encoded", "home_away", "opponent_k_rate", "recent_k9"])
+			# ✅ Make Prediction
 			prediction = model.predict(X_pred)[0]
 			st.success(f"Predicted Strikeouts: {round(prediction, 2)}")
 			
