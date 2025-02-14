@@ -102,22 +102,21 @@ if os.path.exists(model_path):
 	# ✅ Calculate Last 5 Games K/9
 	last_5_games_k9 = calculate_k_per_9(player_games.head(5))
 	
-	# ✅ Ensure opponent_k_rate is properly converted to numeric
-	st.write("📊 Debug: Checking opponent_k_rate values before conversion...")
-	st.write("🔍 Unique Values of opponent_k_rate:", player_games["opponent_k_rate"].unique())
-	
 	player_games["opponent_k_rate"] = pd.to_numeric(player_games["opponent_k_rate"], errors="coerce")
 	
 	# ✅ Compute the mean K% while ignoring invalid values
 	opponent_k_rate = player_games[player_games["opponent"] == opponent]["opponent_k_rate"].mean()
 	
-	st.write(f"📊 Computed Opponent K%: {opponent_k_rate}")  # Debugging
 	
 	# ✅ Predict Strikeouts
 	if st.button("Predict Strikeouts"):
+		# ✅ Calculate Last 5 Games K/9 for Recent Form
+		recent_k9 = calculate_k_per_9(player_games.head(5))
+		if recent_k9 is None:
+			recent_k9 = season_k9  # Use season K/9 as a fallback
 		if label_encoder and opponent in label_encoder.classes_:
 			opponent_encoded = label_encoder.transform([opponent])[0]
-			X_pred = np.array([[innings_pitched, opponent_encoded, home_away_value, opponent_k_rate]])
+			X_pred = np.array([[innings_pitched, opponent_encoded, home_away_value, opponent_k_rate, recent_k9]])
 			prediction = model.predict(X_pred)[0]
 			st.success(f"Predicted Strikeouts: {round(prediction, 2)}")
 			
