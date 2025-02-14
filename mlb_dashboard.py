@@ -3,7 +3,7 @@
 import streamlit as st
 import pandas as pd
 import joblib
-import psycopg2
+import sqlite3
 import os
 import numpy as np
 
@@ -30,24 +30,21 @@ else:
 	
 # ✅ Get Player List from Database
 def get_players():
-	DATABASE_URL = os.getenv("DATABASE_URL")  # ✅ Read from environment variable
-	conn = psycopg2.connect(DATABASE_URL)  # ✅ Connect to PostgreSQL
+	conn = sqlite3.connect("mlb_data.db")
 	df = pd.read_sql("SELECT DISTINCT player FROM pitcher_stats", conn)
 	conn.close()
 	return df["player"].tolist()
 
 # ✅ Get Opponent List from Database
 def get_opponents():
-	DATABASE_URL = os.getenv("DATABASE_URL")  # ✅ Read from environment variable
-	conn = psycopg2.connect(DATABASE_URL)  # ✅ Connect to PostgreSQL
+	conn = sqlite3.connect("mlb_data.db")
 	df = pd.read_sql("SELECT DISTINCT opponent FROM pitcher_stats", conn)
 	conn.close()
 	return df["opponent"].dropna().tolist()
 
 # ✅ Get Player's Game Logs
 def get_player_game_logs(player):
-	DATABASE_URL = os.getenv("DATABASE_URL")  # ✅ Read from environment variable
-	conn = psycopg2.connect(DATABASE_URL)  # ✅ Connect to PostgreSQL
+	conn = sqlite3.connect("mlb_data.db")
 	df = pd.read_sql(f"SELECT * FROM pitcher_stats WHERE player = '{player}' ORDER BY dat DESC", conn)
 	conn.close()
 	
@@ -102,26 +99,32 @@ if os.path.exists(model_path):
 	# ✅ Calculate Season K/9 (All Games)
 	season_k9 = calculate_k_per_9(player_games)
 	
-	# ✅ Calculate Last 5 Games K/9 (Recent Form)
-	recent_k9 = calculate_k_per_9(player_games.head(5))
+	# ✅ Calculate Last 5 Games K/9
+	last_5_games_k9 = calculate_k_per_9(player_games.head(5))
+	
+	# ✅ Ensure opponent_k_rate is properly converted to numeric
+	st.write("📊 Debug: Checking opponent_k_rate values before conversion...")
+	st.write("🔍 Unique Values of opponent_k_rate:", player_games["opponent_k_rate"].unique())
+	
+	player_games["opponent_k_rate"] = pd.to_numeric(player_games["opponent_k_rate"], errors="coerce")
+	
+	# ✅ Compute the mean K% while ignoring invalid values
+	opponent_k_rate = player_games[player_games["opponent"] == opponent]["opponent_k_rate"].mean()
+	
+	st.write(f"📊 Computed Opponent K%: {opponent_k_rate}")  # Debugging
 	
 	# ✅ Predict Strikeouts
 	if st.button("Predict Strikeouts"):
 		if label_encoder and opponent in label_encoder.classes_:
 			opponent_encoded = label_encoder.transform([opponent])[0]
-			opponent_k_rate = player_games[player_games["opponent"] == opponent]["opponent_k_rate"].mean()
-			
-			if np.isnan(opponent_k_rate):  # ✅ Default if opponent_k_rate is missing
-				opponent_k_rate = player_games["opponent_k_rate"].mean()
-			
-			X_pred = np.array([[innings_pitched, opponent_encoded, home_away_value, opponent_k_rate, recent_k9]])
+			X_pred = np.array([[innings_pitched, opponent_encoded, home_away_value, opponent_k_rate]])
 			prediction = model.predict(X_pred)[0]
 			st.success(f"Predicted Strikeouts: {round(prediction, 2)}")
 			
 			# ✅ Display K/9 Stats
 			st.subheader(f"📊 {player} K/9 Stats")
 			st.write(f"🔹 **Season K/9:** {season_k9 if season_k9 is not None else 'Not Available'}")
-			st.write(f"🔹 **Last 5 Games K/9 (Recent Form):** {recent_k9 if recent_k9 is not None else 'Not Available'}")
+			st.write(f"🔹 **Last 5 Games K/9:** {last_5_games_k9 if last_5_games_k9 is not None else 'Not Available'}")
 			
 		else:
 			st.error("Opponent not found in training data. Try another.")
